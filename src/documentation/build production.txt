@@ -1,0 +1,2 @@
+<----------- Compilar para produccion ----------->
+ng build --configuration production

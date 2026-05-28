@@ -1,27 +1,57 @@
-# Primeng17FrontEndTemplate
+# SCTF-09-2025-Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.14.
+Frontend del **Sistema de Control de Tesorería y Fiscal** (Tododren). Angular 18 + PrimeNG 17 + MSAL Azure AD.
 
-## Development server
+Incluye actualmente los siguientes módulos:
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Contabilidad Electrónica (CONE)** — Generación de XMLs SAT v1.3 (Catálogo, Balanza, Pólizas, Auxiliar) desde SAP B1 con resolución interactiva de cuentas sin `U_COD_AG`.
+- *(WIP)* Resto de módulos del SCTF (Bancos, Pagos, Conciliaciones, etc.)
 
-## Code scaffolding
+## Requisitos
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Node 20 LTS
+- Angular CLI 18.2.x
+- Backend SCTF corriendo (por defecto en `https://localhost:7053` — configurable en `src/environments/`).
 
-## Build
+## Comandos
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm install              # instala dependencias
+npm start                # ng serve → http://localhost:4200
+npm run build            # build production a dist/SCTF-09-2025-Frontend
+npm run watch            # build con --watch en dev
+npm test                 # tests con Karma
+```
 
-## Running unit tests
+## Estructura
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```
+src/app/
+├── app.{component,config,routes}.ts   Bootstrap Angular + MSAL
+├── azure/                              Configuración MSAL Azure AD
+├── shared/                             Servicios, guards, interfaces y helpers comunes
+│   └── services/
+│       ├── http-client.service.ts     Wrapper de HttpClient con environment.apiUrl
+│       ├── toast.service.ts           Wrapper PrimeNG MessageService + .apiError()
+│       └── api-error.helper.ts        Parseo estandarizado de HttpErrorResponse
+└── modules/
+    ├── admin/                          Login, server-error, auth
+    ├── layout/                         Sidebar, topbar, footer, layout principal
+    └── contabilidad-electronica/       Módulo CONE
+        ├── pages/
+        │   ├── dashboard/
+        │   ├── cuentas-sin-agrupador/
+        │   ├── configuracion/
+        │   ├── historial/
+        │   └── wizard-generacion/
+        ├── services/cone.service.ts
+        └── models/cone.models.ts
+```
 
-## Running end-to-end tests
+## Convenciones
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Standalone components** (sin NgModules).
+- **Signals** para estado local de componente; `subscribe` para flujos HTTP.
+- **Lazy loading** por módulo en `app.routes.ts`.
+- **PrimeNG `appendTo="body"`** en dropdowns dentro de tablas / dialogs.
+- **Errores HTTP**: usar `toast.apiError(err, 'prefijo')` para mensajes estandarizados con `traceId`.

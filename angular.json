@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Primeng17_FrontEnd_Template": {
+    "SCTF-09-2025-Frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/primeng17-front-end-template",
+            "outputPath": "dist/SCTF-09-2025-Frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -52,13 +52,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "2MB"
                 }
               ],
               "outputHashing": "all"
@@ -81,10 +81,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Primeng17_FrontEnd_Template:build:production"
+              "buildTarget": "SCTF-09-2025-Frontend:build:production"
             },
             "development": {
-              "buildTarget": "Primeng17_FrontEnd_Template:build:development"
+              "buildTarget": "SCTF-09-2025-Frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

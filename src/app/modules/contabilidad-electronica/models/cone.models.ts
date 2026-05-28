@@ -128,6 +128,20 @@ export interface CuentasFaltantesResponse {
   cuentas: CuentaFaltanteItem[];
 }
 
+/**
+ * Respuesta 422 cuando el XML SAT se genero pero el validador detecto
+ * errores estructurales (CodAgrup vacio, naturaleza invalida, etc.).
+ * Codigo: 'XML_INVALIDO'.
+ */
+export interface XmlInvalidoResponse {
+  codigo: 'XML_INVALIDO';
+  mensaje: string;
+  estadoValidacion: 'CON_ERRORES';
+  detalleValidacion: string;
+  nombreArchivo: string;
+  tamanioBytes: number;
+}
+
 export interface CuentaFaltanteItem {
   idCuentaSinAgrupador: number;
   acctCode: string;

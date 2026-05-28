@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
@@ -46,6 +46,7 @@ interface EditFaltante {
 })
 export class WizardGeneracionComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly cone = inject(ConeService);
   private readonly toast = inject(ToastService);
 
@@ -78,10 +79,17 @@ export class WizardGeneracionComponent implements OnInit {
   // ============ Dialog "Cuentas faltantes" (reemplazo del MessageBox legacy) ============
   dialogFaltantesVisible = signal(false);
   cuentasFaltantes = signal<CuentaFaltanteItem[]>([]);
+  totalFaltantesReal = signal<number>(0);                  // Puede ser > cuentasFaltantes().length si se truncaron
   catalogoSat = signal<CodigoAgrupadorSat[]>([]);
   naturalezas = signal<NaturalezaSat[]>([]);
   editsFaltantes = signal<Record<number, EditFaltante>>({});
   resolviendoIds = signal<Set<number>>(new Set());
+
+  // ============ Dialog "XML invalido" (errores del validador SAT) ============
+  dialogXmlInvalidoVisible = signal(false);
+  xmlInvalidoMensaje = signal<string>('');
+  xmlInvalidoDetalle = signal<string>('');
+  xmlInvalidoArchivo = signal<string>('');
 
   readonly anios = Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i);
   readonly meses = Array.from({ length: 12 }, (_, i) => ({
@@ -165,23 +173,41 @@ export class WizardGeneracionComponent implements OnInit {
       error: err => {
         this.generando.set(false);
 
-        // 422 con CUENTAS_FALTANTES → abrir dialog inline para resolver
+        // 422 puede venir con dos codigos de negocio:
+        //   CUENTAS_FALTANTES → preflight: hay cuentas sin U_COD_AG (dialog inline)
+        //   XML_INVALIDO      → el XML se genero pero el validador SAT lo rechazo
         const body = err?.error;
-        if (err?.status === 422 && body?.codigo === 'CUENTAS_FALTANTES') {
-          this.abrirDialogFaltantes(body.cuentas as CuentaFaltanteItem[], body.mensaje);
+        const codigo = body?.codigo ?? body?.Codigo;
+
+        if (err?.status === 422 && codigo === 'CUENTAS_FALTANTES') {
+          const cuentas = (body.cuentas ?? body.Cuentas ?? []) as CuentaFaltanteItem[];
+          const totalReal = body.totalFaltantes ?? body.TotalFaltantes ?? cuentas.length;
+          const mensaje = body.mensaje ?? body.Mensaje ?? 'Hay cuentas sin codigo agrupador.';
+          this.abrirDialogFaltantes(cuentas, totalReal, mensaje);
           return;
         }
 
-        const detalle = body?.error ?? body?.mensaje ?? err?.message ?? 'Error desconocido';
-        this.toast.error(`No se pudo generar el XML: ${detalle}`);
+        if (err?.status === 422 && codigo === 'XML_INVALIDO') {
+          this.abrirDialogXmlInvalido(
+            body.mensaje ?? body.Mensaje ?? 'El XML generado contiene errores.',
+            body.detalleValidacion ?? body.DetalleValidacion ?? '(sin detalle)',
+            body.nombreArchivo ?? body.NombreArchivo ?? ''
+          );
+          return;
+        }
+
+        // Cualquier otro error: el ToastService.apiError() extrae traceId,
+        // codigo y detalle del ApiExceptionMiddleware y arma un mensaje claro.
+        this.toast.apiError(err, 'No se pudo generar el XML.');
       }
     });
   }
 
   // ============ Dialog cuentas faltantes ============
 
-  private abrirDialogFaltantes(cuentas: CuentaFaltanteItem[], mensaje: string) {
+  private abrirDialogFaltantes(cuentas: CuentaFaltanteItem[], totalReal: number, mensaje: string) {
     this.cuentasFaltantes.set(cuentas);
+    this.totalFaltantesReal.set(totalReal);
 
     // Inicializa el edit por fila (escribir en SAP por default)
     const initial: Record<number, EditFaltante> = {};
@@ -195,6 +221,27 @@ export class WizardGeneracionComponent implements OnInit {
     this.editsFaltantes.set(initial);
     this.dialogFaltantesVisible.set(true);
     this.toast.warn(mensaje);
+  }
+
+  /** Hay mas cuentas faltantes en el server de las que cabe mostrar inline. */
+  readonly hayOverflow = computed(() => this.totalFaltantesReal() > this.cuentasFaltantes().length);
+
+  /** Cuantas cuentas extra hay en el server que no estan en el dialog. */
+  readonly faltantesNoMostradas = computed(() =>
+    Math.max(0, this.totalFaltantesReal() - this.cuentasFaltantes().length)
+  );
+
+  irAPantallaGrande() {
+    this.dialogFaltantesVisible.set(false);
+    this.dialogXmlInvalidoVisible.set(false);
+    this.router.navigate(['/contabilidad-electronica/cuentas-sin-agrupador']);
+  }
+
+  private abrirDialogXmlInvalido(mensaje: string, detalle: string, archivo: string) {
+    this.xmlInvalidoMensaje.set(mensaje);
+    this.xmlInvalidoDetalle.set(detalle);
+    this.xmlInvalidoArchivo.set(archivo);
+    this.dialogXmlInvalidoVisible.set(true);
   }
 
   getEditFaltante(id: number): EditFaltante {
@@ -237,8 +284,7 @@ export class WizardGeneracionComponent implements OnInit {
       },
       error: err => {
         this.resolviendoIds.update(s => { const n = new Set(s); n.delete(row.idCuentaSinAgrupador); return n; });
-        const msg = err?.error?.error ?? err?.message ?? 'Error desconocido';
-        this.toast.error(`No se pudo resolver ${row.acctCode}: ${msg}`);
+        this.toast.apiError(err, `No se pudo resolver ${row.acctCode}.`);
       }
     });
   }

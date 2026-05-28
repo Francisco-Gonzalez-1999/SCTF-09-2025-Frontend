@@ -139,6 +139,44 @@
 </div>
 
 <!-- ============================================================
+     DIALOG XML INVALIDO (validador SAT detecto errores)
+     Se abre cuando POST /Generaciones devuelve 422 con XML_INVALIDO.
+     El XML NO se persistio en BD; el usuario debe corregir y reintentar.
+     ============================================================ -->
+<p-dialog [(visible)]="dialogXmlInvalidoVisible"
+          [modal]="true"
+          [closable]="true"
+          [dismissableMask]="false"
+          [style]="{ width: '80vw', maxWidth: '900px' }">
+  <ng-template pTemplate="header">
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-times-circle text-red-500" style="font-size: 1.5rem"></i>
+      <h3 class="m-0">El XML contiene errores y NO fue guardado</h3>
+    </div>
+  </ng-template>
+
+  <p class="text-color-secondary m-0 mb-2">{{ xmlInvalidoMensaje() }}</p>
+  <p *ngIf="xmlInvalidoArchivo()" class="text-xs text-color-secondary mb-3">
+    Archivo que se hubiera generado: <code>{{ xmlInvalidoArchivo() }}</code>
+  </p>
+
+  <div class="xml-invalido-detalle">
+    <pre>{{ xmlInvalidoDetalle() }}</pre>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton icon="pi pi-times" label="Cerrar"
+            class="p-button-text"
+            (click)="dialogXmlInvalidoVisible.set(false)"></button>
+    <button pButton icon="pi pi-external-link" label="Ir a 'Cuentas sin agrupador'"
+            class="p-button-outlined"
+            (click)="irAPantallaGrande()"></button>
+    <button pButton icon="pi pi-refresh" label="Reintentar generacion"
+            (click)="dialogXmlInvalidoVisible.set(false); generar()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ============================================================
      DIALOG CUENTAS FALTANTES (reemplazo moderno del MessageBox del legacy)
      Se abre cuando POST /Generaciones devuelve 422 con CUENTAS_FALTANTES.
      ============================================================ -->
@@ -162,7 +200,25 @@
     Resuelvelas aqui mismo o haz click en <em>Cancelar</em> para arreglarlas en SAP manualmente.
   </p>
 
-  <p-table [value]="cuentasFaltantes()" styleClass="p-datatable-sm" dataKey="idCuentaSinAgrupador">
+  <!-- Banner cuando hay mas cuentas en el server de las que cabe mostrar inline -->
+  <div *ngIf="hayOverflow()" class="overflow-banner mb-3">
+    <i class="pi pi-info-circle mr-2"></i>
+    <span>
+      Hay <strong>{{ faltantesNoMostradas() }}</strong> cuenta(s) adicionales en SAP que no se muestran aqui
+      (el dialog limita a {{ cuentasFaltantes().length }} para no saturar el navegador).
+      Para ver y resolverlas TODAS, usa la pantalla grande:
+    </span>
+    <button pButton label="Abrir 'Cuentas sin agrupador'"
+            icon="pi pi-external-link"
+            class="p-button-sm p-button-outlined ml-2"
+            (click)="irAPantallaGrande()"></button>
+  </div>
+
+  <p-table [value]="cuentasFaltantes()"
+           [paginator]="true"
+           [rows]="20"
+           [rowsPerPageOptions]="[10, 20, 50, 100]"
+           styleClass="p-datatable-sm" dataKey="idCuentaSinAgrupador">
     <ng-template pTemplate="header">
       <tr>
         <th style="width: 8rem">Cuenta</th>
@@ -183,6 +239,8 @@
                       optionValue="codAgrupador"
                       [filter]="true"
                       filterBy="codAgrupador,nomCuenta"
+                      [virtualScroll]="true"
+                      [virtualScrollItemSize]="38"
                       [ngModel]="getEditFaltante(row.idCuentaSinAgrupador).codAgrupador"
                       (onChange)="setEditFaltante(row.idCuentaSinAgrupador, { codAgrupador: $event.value })"
                       placeholder="Buscar..."

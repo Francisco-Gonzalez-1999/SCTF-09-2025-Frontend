@@ -1,0 +1,14 @@
+.cone-historial {
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.875rem;
+  }
+
+  /* Header con sort + filter en la misma celda */
+  .th-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+}

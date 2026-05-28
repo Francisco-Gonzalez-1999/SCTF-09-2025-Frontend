@@ -1,0 +1,128 @@
+<div class="cone-historial p-3">
+  <div class="flex flex-wrap align-items-center justify-content-between mb-3 gap-3">
+    <div>
+      <h2 class="m-0">Historial de generaciones</h2>
+      <p class="text-color-secondary m-0 mt-1">XML SAT generados por empresa y periodo.</p>
+    </div>
+    <div class="flex flex-wrap align-items-center gap-2">
+      <p-dropdown [options]="empresas()"
+                  [(ngModel)]="empresaSeleccionada"
+                  (onChange)="cargar()"
+                  [filter]="true" filterBy="razonSocial,rfc"
+                  optionLabel="razonSocial" placeholder="Empresa"
+                  appendTo="body" styleClass="w-15rem"></p-dropdown>
+      <p-dropdown [options]="anios"
+                  [(ngModel)]="filtroAnio"
+                  (onChange)="cargar()"
+                  appendTo="body" styleClass="w-7rem"></p-dropdown>
+      <p-dropdown [options]="meses"
+                  [(ngModel)]="filtroMes"
+                  (onChange)="cargar()"
+                  optionLabel="label" optionValue="value"
+                  appendTo="body" styleClass="w-7rem"></p-dropdown>
+      <button pButton icon="pi pi-refresh" class="p-button-text" (click)="cargar()"></button>
+    </div>
+  </div>
+
+  <p-table [value]="generaciones()"
+           [loading]="cargando()"
+           [paginator]="true"
+           [rows]="20"
+           [globalFilterFields]="['nombreArchivo','tipoDocumento','estadoValidacion']"
+           styleClass="p-datatable-sm"
+           dataKey="idGeneracion">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="tipoDocumento" style="width: 11rem">
+          <div class="th-cell">
+            <span>Tipo <p-sortIcon field="tipoDocumento"></p-sortIcon></span>
+            <p-columnFilter field="tipoDocumento" matchMode="equals" display="menu"
+                            [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                <p-dropdown [ngModel]="value"
+                            [options]="opcionesTipoDocumento"
+                            optionLabel="label" optionValue="value"
+                            (onChange)="filter($event.value)"
+                            [showClear]="true" placeholder="Todos"
+                            appendTo="body" styleClass="w-full"></p-dropdown>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="anio" style="width: 7rem">
+          <div class="th-cell">
+            <span>Anio <p-sortIcon field="anio"></p-sortIcon></span>
+            <p-columnFilter type="numeric" field="anio" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="mes" style="width: 7rem">
+          <div class="th-cell">
+            <span>Mes <p-sortIcon field="mes"></p-sortIcon></span>
+            <p-columnFilter type="numeric" field="mes" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="nombreArchivo">
+          <div class="th-cell">
+            <span>Archivo <p-sortIcon field="nombreArchivo"></p-sortIcon></span>
+            <p-columnFilter type="text" field="nombreArchivo" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="estadoValidacion" style="width: 12rem">
+          <div class="th-cell">
+            <span>Estado <p-sortIcon field="estadoValidacion"></p-sortIcon></span>
+            <p-columnFilter field="estadoValidacion" matchMode="equals" display="menu"
+                            [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                <p-dropdown [ngModel]="value"
+                            [options]="opcionesEstadoValidacion"
+                            optionLabel="label" optionValue="value"
+                            (onChange)="filter($event.value)"
+                            [showClear]="true" placeholder="Todos"
+                            appendTo="body" styleClass="w-full"></p-dropdown>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="fechaCreacion" style="width: 11rem">
+          <div class="th-cell">
+            <span>Creado <p-sortIcon field="fechaCreacion"></p-sortIcon></span>
+            <p-columnFilter type="date" field="fechaCreacion" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th style="width: 8rem">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-g>
+      <tr>
+        <td><i [class]="iconoTipo(g.tipoDocumento)" class="mr-1"></i> {{ g.tipoDocumento }}</td>
+        <td>{{ g.anio }}</td>
+        <td>{{ g.mes }}</td>
+        <td class="font-mono">{{ g.nombreArchivo }}</td>
+        <td>
+          <p-tag [value]="g.estadoValidacion"
+                 [severity]="severityValidacion(g.estadoValidacion)"></p-tag>
+        </td>
+        <td>{{ g.fechaCreacion | date:'short' }}</td>
+        <td>
+          <button pButton icon="pi pi-download"
+                  class="p-button-sm p-button-text"
+                  (click)="descargar(g)"
+                  pTooltip="Descarga el XML del SAT generado en este registro. El archivo se guarda con su nombre original (RFC_AAAA_MM_TIPO.xml)."
+                  tooltipPosition="left"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center text-color-secondary p-4">
+          <ng-container *ngIf="!empresaSeleccionada()">Selecciona una empresa para ver el historial.</ng-container>
+          <ng-container *ngIf="empresaSeleccionada() && !cargando()">Sin generaciones en este periodo.</ng-container>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

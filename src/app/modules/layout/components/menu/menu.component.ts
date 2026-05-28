@@ -22,20 +22,24 @@ export class MenuComponent implements OnInit {
 
   ngOnInit() {
     this.model = [
-        {
-          label: 'Menu1',
-          items: [
-            { label: 'Sub-menu1', icon: 'pi pi-fw pi-calculator', routerLink: ['/'] }
-          ]
-        },
-        {
-          label: 'Menu2',
-          items: [
-            { label: 'Sub-menu2', icon: 'pi pi-fw pi-file-edit', routerLink: ['/m1']  },
-          ]
-        },
-
-
+      {
+        label: 'Contabilidad Electronica',
+        items: [
+          { label: 'Inicio',                icon: 'pi pi-fw pi-home',                  routerLink: ['/contabilidad-electronica'] },
+          { label: 'Cuentas sin agrupador', icon: 'pi pi-fw pi-exclamation-triangle',  routerLink: ['/contabilidad-electronica/cuentas-sin-agrupador'] },
+          { label: 'Configuracion',         icon: 'pi pi-fw pi-cog',                   routerLink: ['/contabilidad-electronica/configuracion'] },
+          { label: 'Historial',             icon: 'pi pi-fw pi-history',               routerLink: ['/contabilidad-electronica/historial'] }
+        ]
+      },
+      {
+        label: 'Generar XML SAT',
+        items: [
+          { label: 'Catalogo de cuentas', icon: 'pi pi-fw pi-list',       routerLink: ['/contabilidad-electronica/generar/catalogo'] },
+          { label: 'Balanza',             icon: 'pi pi-fw pi-chart-bar',  routerLink: ['/contabilidad-electronica/generar/balanza'] },
+          { label: 'Polizas',             icon: 'pi pi-fw pi-file-edit',  routerLink: ['/contabilidad-electronica/generar/polizas'] },
+          { label: 'Auxiliar de cuentas', icon: 'pi pi-fw pi-table',      routerLink: ['/contabilidad-electronica/generar/auxiliar'] }
+        ]
+      }
     ];
   }
 

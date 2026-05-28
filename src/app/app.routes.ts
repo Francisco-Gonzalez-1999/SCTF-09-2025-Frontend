@@ -5,7 +5,21 @@ import { isLoggedIn, isNotLoggedIn } from './shared/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    component: LayoutComponent
+    component: LayoutComponent,
+    canActivate: [isLoggedIn],
+    children: [
+      {
+        path: '',
+        redirectTo: 'contabilidad-electronica',
+        pathMatch: 'full'
+      },
+      {
+        path: 'contabilidad-electronica',
+        loadChildren: () =>
+          import('./modules/contabilidad-electronica/contabilidad-electronica.routing')
+            .then(m => m.contabilidadElectronicaRoutes)
+      }
+    ]
   },
   {
     path: 'auth',

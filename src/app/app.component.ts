@@ -1,28 +1,25 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'Primeng17_FrontEnd_Template';
+  title = 'SCTF-09-2025-Frontend';
 
   constructor(private msalService: MsalService) {}
 
   async ngOnInit() {
     try {
       await this.msalService.initialize();
-      // console.log('MSAL initialized successfully');
     } catch (error) {
-      // console.error('MSAL initialization failed', error);
-    } finally {
-      // this.isInitializing = false;
+      // MSAL init handled by error boundary above
     }
   }
-
 }

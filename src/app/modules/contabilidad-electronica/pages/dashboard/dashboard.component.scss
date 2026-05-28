@@ -1,0 +1,27 @@
+.cone-dashboard {
+  .cone-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .cone-card {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    cursor: pointer;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .cone-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+}

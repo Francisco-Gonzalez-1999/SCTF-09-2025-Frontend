@@ -1,0 +1,50 @@
+<div class="cone-dashboard p-3">
+  <div class="flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+    <div>
+      <h2 class="m-0">Contabilidad Electronica</h2>
+      <p class="text-color-secondary m-0 mt-1">
+        Genera los XML SAT v1.3 a partir de SAP B1 (Catalogo, Balanza, Polizas, Auxiliar).
+      </p>
+    </div>
+    <div class="flex align-items-center gap-2" style="min-width: 320px">
+      <label for="empresa" class="font-medium">Empresa</label>
+      <p-dropdown
+        inputId="empresa"
+        [options]="empresas()"
+        [(ngModel)]="empresaSeleccionada"
+        [filter]="true"
+        filterBy="razonSocial,rfc"
+        optionLabel="razonSocial"
+        placeholder="Selecciona empresa"
+        [showClear]="true"
+        [loading]="cargando()"
+        appendTo="body"
+        styleClass="w-full">
+        <ng-template let-emp pTemplate="item">
+          <div class="flex flex-column">
+            <span class="font-medium">{{ emp.razonSocial }}</span>
+            <small class="text-color-secondary">{{ emp.rfc }} &middot; {{ emp.baseDeDatos }}</small>
+          </div>
+        </ng-template>
+      </p-dropdown>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div *ngFor="let accion of accesos" class="col-12 md:col-6 lg:col-4">
+      <a [routerLink]="accion.ruta" class="cone-card-link">
+        <p-card styleClass="h-full cone-card">
+          <div class="flex align-items-start gap-3">
+            <div class="cone-icon" [ngClass]="accion.color">
+              <i [class]="accion.icono"></i>
+            </div>
+            <div>
+              <h4 class="m-0 mb-1">{{ accion.titulo }}</h4>
+              <p class="text-color-secondary m-0">{{ accion.descripcion }}</p>
+            </div>
+          </div>
+        </p-card>
+      </a>
+    </div>
+  </div>
+</div>

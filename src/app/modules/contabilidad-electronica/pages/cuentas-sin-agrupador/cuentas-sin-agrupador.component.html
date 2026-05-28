@@ -1,0 +1,239 @@
+<div class="cuentas-sin-agrupador p-3">
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="flex flex-wrap align-items-center justify-content-between mb-3 gap-3">
+    <div>
+      <h2 class="m-0">Cuentas sin codigo agrupador</h2>
+      <p class="text-color-secondary m-0 mt-1">
+        Reemplaza el log <code>logcuentas.txt</code> del VCON. Asigna el U_COD_AG y
+        opcionalmente escribelo en SAP via DI API.
+      </p>
+    </div>
+    <div class="flex align-items-center gap-2 flex-wrap">
+      <p-dropdown
+        [options]="empresas()"
+        [(ngModel)]="empresaSeleccionada"
+        (onChange)="onEmpresaSeleccionada()"
+        [filter]="true"
+        filterBy="razonSocial,rfc"
+        optionLabel="razonSocial"
+        placeholder="Empresa"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-15rem">
+        <ng-template let-emp pTemplate="item">
+          <div class="flex flex-column">
+            <span class="font-medium">{{ emp.razonSocial }}</span>
+            <small class="text-color-secondary">{{ emp.rfc }}</small>
+          </div>
+        </ng-template>
+      </p-dropdown>
+
+      <p-dropdown
+        [options]="opcionesEstado"
+        [(ngModel)]="estadoFiltro"
+        (onChange)="cargar()"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-10rem">
+      </p-dropdown>
+
+      <button pButton
+              icon="pi pi-search-plus"
+              label="Detectar"
+              class="p-button-outlined"
+              [loading]="detectando()"
+              [disabled]="!empresaSeleccionada()"
+              (click)="detectar()"
+              pTooltip="Consulta SAP B1 (tabla OACT) y registra como pendientes todas las cuentas postables que aun no tienen codigo agrupador SAT. Las que ya estaban pendientes no se duplican."
+              tooltipPosition="bottom"
+              [tooltipStyleClass]="'cone-tooltip'">
+      </button>
+
+      <button pButton
+              icon="pi pi-refresh"
+              class="p-button-text"
+              [disabled]="!empresaSeleccionada()"
+              (click)="cargar()"
+              pTooltip="Recarga la lista desde la base de datos del modulo CONE (no consulta SAP). Util si alguien mas resolvio cuentas desde otra sesion."
+              tooltipPosition="bottom"
+              [tooltipStyleClass]="'cone-tooltip'">
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="empresaSeleccionada() && totalPendientes() > 0" class="callout callout-warn mb-3">
+    <i class="pi pi-exclamation-triangle mr-2"></i>
+    Hay <strong>{{ totalPendientes() }}</strong> cuentas pendientes de asignar codigo agrupador SAT.
+  </div>
+
+  <p-table [value]="cuentas()"
+           [loading]="cargando()"
+           [paginator]="true"
+           [rows]="20"
+           [rowsPerPageOptions]="[10, 20, 50, 100]"
+           [globalFilterFields]="['acctCode','acctName']"
+           styleClass="p-datatable-sm"
+           dataKey="idCuentaSinAgrupador">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="acctCode" style="width: 11rem">
+          <div class="th-cell">
+            <span>Cuenta <p-sortIcon field="acctCode"></p-sortIcon></span>
+            <p-columnFilter type="text" field="acctCode" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="acctName">
+          <div class="th-cell">
+            <span>Nombre <p-sortIcon field="acctName"></p-sortIcon></span>
+            <p-columnFilter type="text" field="acctName" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="nivelCuenta" style="width: 6rem">
+          <div class="th-cell">
+            <span>Nivel <p-sortIcon field="nivelCuenta"></p-sortIcon></span>
+            <p-columnFilter type="numeric" field="nivelCuenta" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="codAgrupadorAsignado" style="width: 16rem">
+          <div class="th-cell">
+            <span>Codigo agrupador SAT <p-sortIcon field="codAgrupadorAsignado"></p-sortIcon></span>
+            <p-columnFilter type="text" field="codAgrupadorAsignado" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th style="width: 9rem">Naturaleza</th>
+        <th pSortableColumn="observaciones" style="width: 12rem">
+          <div class="th-cell">
+            <span>Observaciones <p-sortIcon field="observaciones"></p-sortIcon></span>
+            <p-columnFilter type="text" field="observaciones" display="menu"
+                            [showOperator]="false" [showAddButton]="false"></p-columnFilter>
+          </div>
+        </th>
+        <th pSortableColumn="estado" style="width: 10rem">
+          <div class="th-cell">
+            <span>Estado <p-sortIcon field="estado"></p-sortIcon></span>
+            <p-columnFilter field="estado" matchMode="equals" display="menu"
+                            [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                <p-dropdown [ngModel]="value"
+                            [options]="opcionesEstado"
+                            optionLabel="label" optionValue="value"
+                            (onChange)="filter($event.value)"
+                            [showClear]="true"
+                            placeholder="Todos"
+                            appendTo="body"
+                            styleClass="w-full"></p-dropdown>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+        <th style="width: 14rem">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        <td class="font-mono">{{ row.acctCode }}</td>
+        <td>{{ row.acctName }}</td>
+        <td>{{ row.nivelCuenta }}</td>
+        <td>
+          <ng-container *ngIf="row.estado === 'PENDIENTE'; else codigoLeer">
+            <p-dropdown [options]="catalogoSat()"
+                        optionLabel="codAgrupador"
+                        optionValue="codAgrupador"
+                        [filter]="true"
+                        filterBy="codAgrupador,nomCuenta"
+                        [ngModel]="getEdit(row.idCuentaSinAgrupador).codAgrupador"
+                        (onChange)="setEdit(row.idCuentaSinAgrupador, { codAgrupador: $event.value })"
+                        placeholder="Buscar..."
+                        appendTo="body"
+                        styleClass="w-full">
+              <ng-template let-cod pTemplate="item">
+                <div class="flex flex-column">
+                  <span class="font-mono">{{ cod.codAgrupador }}</span>
+                  <small class="text-color-secondary">{{ cod.nomCuenta }}</small>
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </ng-container>
+          <ng-template #codigoLeer>
+            <span class="font-mono">{{ row.codAgrupadorAsignado }}</span>
+          </ng-template>
+        </td>
+        <td>
+          <p-dropdown *ngIf="row.estado === 'PENDIENTE'; else naturalezaLeer"
+                      [options]="naturalezas()"
+                      optionLabel="clave"
+                      optionValue="idNaturalezaSat"
+                      [ngModel]="getEdit(row.idCuentaSinAgrupador).idNaturaleza"
+                      (onChange)="setEdit(row.idCuentaSinAgrupador, { idNaturaleza: $event.value })"
+                      placeholder="D/A"
+                      appendTo="body"
+                      styleClass="w-full"></p-dropdown>
+          <ng-template #naturalezaLeer>{{ row.idNaturalezaAsignada }}</ng-template>
+        </td>
+        <td>
+          <input *ngIf="row.estado === 'PENDIENTE'; else obsLeer"
+                 pInputText
+                 [ngModel]="getEdit(row.idCuentaSinAgrupador).observaciones"
+                 (ngModelChange)="setEdit(row.idCuentaSinAgrupador, { observaciones: $event })"
+                 placeholder="Notas..."
+                 class="w-full">
+          <ng-template #obsLeer>{{ row.observaciones }}</ng-template>
+        </td>
+        <td>
+          <p-tag [value]="row.estado" [severity]="estadoSeverity(row.estado)"></p-tag>
+          <small *ngIf="row.escritoEnSap" class="block text-color-secondary mt-1">
+            <i class="pi pi-check-circle text-green-500"></i> Escrito en SAP
+          </small>
+        </td>
+        <td>
+          <ng-container *ngIf="row.estado === 'PENDIENTE'">
+            <div class="flex align-items-center gap-2 mb-2">
+              <p-checkbox [ngModel]="getEdit(row.idCuentaSinAgrupador).escribirEnSap"
+                          (ngModelChange)="setEdit(row.idCuentaSinAgrupador, { escribirEnSap: $event })"
+                          [binary]="true"
+                          inputId="sap-{{ row.idCuentaSinAgrupador }}"></p-checkbox>
+              <label for="sap-{{ row.idCuentaSinAgrupador }}"
+                     class="text-xs cursor-help"
+                     pTooltip="Si esta activo, al guardar tambien se actualizara el campo U_COD_AG en SAP B1 (OACT) via DI API. Si esta inactivo, el cambio solo queda en la BD del modulo CONE y SAP no se modifica."
+                     tooltipPosition="left"
+                     [tooltipStyleClass]="'cone-tooltip'">
+                Escribir en SAP
+              </label>
+            </div>
+            <div class="flex gap-1">
+              <button pButton
+                      icon="pi pi-check"
+                      label="Guardar"
+                      class="p-button-sm p-button-success"
+                      (click)="resolver(row)"
+                      pTooltip="Asigna el codigo agrupador SAT y la naturaleza (D/A) a esta cuenta. Marca la cuenta como RESUELTA. Si 'Escribir en SAP' esta activo, tambien actualiza OACT.U_COD_AG."
+                      tooltipPosition="left"
+                      [tooltipStyleClass]="'cone-tooltip'"></button>
+              <button pButton
+                      icon="pi pi-ban"
+                      class="p-button-sm p-button-secondary p-button-outlined"
+                      (click)="ignorar(row)"
+                      pTooltip="Marca esta cuenta como IGNORADA. No volvera a aparecer en pendientes ni se incluira como faltante en las generaciones XML del SAT. Usalo para cuentas que no aplican al catalogo agrupador."
+                      tooltipPosition="left"
+                      [tooltipStyleClass]="'cone-tooltip'"></button>
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center text-color-secondary p-4">
+          <ng-container *ngIf="!empresaSeleccionada()">Selecciona una empresa para ver las cuentas pendientes.</ng-container>
+          <ng-container *ngIf="empresaSeleccionada() && !cargando()">No hay cuentas en este estado.</ng-container>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

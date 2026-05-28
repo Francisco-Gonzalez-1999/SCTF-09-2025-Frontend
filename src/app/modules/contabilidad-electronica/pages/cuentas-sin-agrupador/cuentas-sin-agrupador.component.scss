@@ -1,0 +1,36 @@
+.cuentas-sin-agrupador {
+  .callout {
+    border-left: 4px solid;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    &.callout-warn {
+      border-color: var(--orange-400, #fb923c);
+      background: rgba(251, 146, 60, 0.08);
+    }
+  }
+
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  /* Header con sort + filter en la misma celda */
+  .th-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+}
+
+/*
+ * Tooltip mas legible para descripciones largas.
+ * Va FUERA del bloque .cuentas-sin-agrupador porque PrimeNG renderiza
+ * el tooltip al <body> (no dentro del componente) y los estilos
+ * con encapsulacion no aplicarian.
+ */
+:host ::ng-deep .cone-tooltip .p-tooltip-text {
+  max-width: 320px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  text-align: left;
+}

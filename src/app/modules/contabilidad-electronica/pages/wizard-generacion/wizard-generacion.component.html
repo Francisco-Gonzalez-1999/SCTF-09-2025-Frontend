@@ -1,0 +1,246 @@
+<div class="cone-wizard p-3">
+  <div class="flex align-items-center mb-3 gap-2">
+    <a routerLink="/contabilidad-electronica" pButton icon="pi pi-arrow-left"
+       class="p-button-text" aria-label="Volver"></a>
+    <h2 class="m-0">Generar XML SAT - {{ tipo() }}</h2>
+  </div>
+
+  <p-card>
+    <div class="grid">
+      <!-- ============ EMPRESA ============ -->
+      <div class="col-12 md:col-6">
+        <label>Empresa</label>
+        <p-dropdown [options]="empresas()"
+                    [(ngModel)]="empresaSeleccionada"
+                    [filter]="true" filterBy="razonSocial,rfc"
+                    optionLabel="razonSocial" placeholder="Empresa"
+                    appendTo="body" styleClass="w-full">
+          <ng-template let-emp pTemplate="item">
+            <div class="flex flex-column">
+              <span class="font-medium">{{ emp.razonSocial }}</span>
+              <small class="text-color-secondary">{{ emp.rfc }} &middot; {{ emp.baseDeDatos }}</small>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <!-- ============ PERIODO ============ -->
+      <div class="col-6 md:col-3">
+        <label>Anio</label>
+        <p-dropdown [options]="anios" [(ngModel)]="anio" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="col-6 md:col-3">
+        <label>Mes</label>
+        <p-dropdown [options]="meses" [(ngModel)]="mes"
+                    optionLabel="label" optionValue="value"
+                    [disabled]="mostrarOpcionesBalanza() && anualizada()"
+                    appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+
+      <!-- ============ NIVEL DE CUENTAS (Catalogo y Balanza) ============ -->
+      <ng-container *ngIf="mostrarNivel()">
+        <div class="col-6 md:col-3">
+          <label>Nivel de cuentas</label>
+          <p-dropdown [options]="nivelesCuenta"
+                      [(ngModel)]="nivelCuenta"
+                      [disabled]="considerarTodasNiveles()"
+                      appendTo="body" styleClass="w-full"
+                      pTooltip="Incluye en el XML las cuentas con OACT.Levels MENOR O IGUAL al nivel seleccionado."
+                      tooltipPosition="top"></p-dropdown>
+        </div>
+        <div class="col-6 md:col-3 flex align-items-end pb-2">
+          <div class="flex align-items-center gap-2">
+            <p-checkbox inputId="todasNiv" [binary]="true"
+                        [ngModel]="considerarTodasNiveles()"
+                        (ngModelChange)="considerarTodasNiveles.set($event)"></p-checkbox>
+            <label for="todasNiv"
+                   class="cursor-help m-0"
+                   pTooltip="Si esta activo se incluyen TODAS las cuentas (todos los niveles). Cuidado: en empresas con miles de cuentas el XML resultante puede ser muy pesado."
+                   tooltipPosition="top">
+              Considerar todas
+            </label>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ============ OPCIONES BALANZA ============ -->
+      <ng-container *ngIf="mostrarOpcionesBalanza()">
+        <div class="col-12 md:col-6">
+          <label>Tipo de envio</label>
+          <p-dropdown [options]="tiposEnvio()"
+                      [(ngModel)]="idTipoEnvio"
+                      optionLabel="nombre" optionValue="idTipoEnvio"
+                      placeholder="Normal / Complementaria"
+                      appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="col-12 md:col-6" *ngIf="tipoSeleccionadoEnvio()?.requiereFechaMod">
+          <label>Fecha de modificacion balanza</label>
+          <p-calendar [(ngModel)]="fechaModBalanza" appendTo="body" styleClass="w-full" dateFormat="dd/mm/yy"></p-calendar>
+        </div>
+        <div class="col-12 md:col-6 flex align-items-center gap-2 pt-3">
+          <p-checkbox inputId="anual" [binary]="true"
+                      [ngModel]="anualizada()"
+                      (ngModelChange)="anualizada.set($event)"></p-checkbox>
+          <label for="anual"
+                 class="cursor-help m-0"
+                 pTooltip="Marca el envio como ANUAL. El backend usa Mes=13 (envio anual SAT) y agrupa todo el ejercicio del Anio seleccionado, ignorando el Mes elegido."
+                 tooltipPosition="top">
+            Anualizada (mes 13)
+          </label>
+        </div>
+        <div class="col-12 md:col-6 flex align-items-center gap-2 pt-3">
+          <p-checkbox inputId="sinCierre" [binary]="true"
+                      [ngModel]="sinCierre()"
+                      (ngModelChange)="sinCierre.set($event)"></p-checkbox>
+          <label for="sinCierre"
+                 class="cursor-help m-0"
+                 pTooltip="Excluye los asientos de cierre del ejercicio (OJDT.TransType = 30). Util para enviar la balanza preliminar antes del cierre contable."
+                 tooltipPosition="top">
+            Sin cierre
+          </label>
+        </div>
+      </ng-container>
+
+      <!-- ============ POLIZAS / AUXILIAR ============ -->
+      <ng-container *ngIf="requiereTipoSolicitud()">
+        <div class="col-12 md:col-4">
+          <label>Tipo de solicitud</label>
+          <p-dropdown [options]="tiposSolicitud()"
+                      [(ngModel)]="idTipoSolicitud"
+                      optionLabel="nombre" optionValue="idTipoSolicitudCone"
+                      placeholder="DE / CO / AF / FC"
+                      appendTo="body" styleClass="w-full">
+            <ng-template let-t pTemplate="item">
+              <div class="flex flex-column">
+                <span class="font-medium">{{ t.clave }} - {{ t.nombre }}</span>
+                <small class="text-color-secondary">{{ t.descripcion }}</small>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+        <div class="col-12 md:col-4" *ngIf="tipoSeleccionadoSolicitud()?.requiereTramite">
+          <label>NumTramite ({{ tipoSeleccionadoSolicitud()?.longitudCampo }} chars)</label>
+          <input pInputText class="w-full" [maxlength]="tipoSeleccionadoSolicitud()?.longitudCampo || 14"
+                 [ngModel]="numTramite()" (ngModelChange)="numTramite.set($event)">
+        </div>
+        <div class="col-12 md:col-4" *ngIf="tipoSeleccionadoSolicitud()?.requiereOrden">
+          <label>NumOrden ({{ tipoSeleccionadoSolicitud()?.longitudCampo }} chars)</label>
+          <input pInputText class="w-full" [maxlength]="tipoSeleccionadoSolicitud()?.longitudCampo || 13"
+                 [ngModel]="numOrden()" (ngModelChange)="numOrden.set($event)">
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="flex justify-content-end mt-4">
+      <button pButton icon="pi pi-play" label="Generar"
+              [loading]="generando()" (click)="generar()"></button>
+    </div>
+  </p-card>
+</div>
+
+<!-- ============================================================
+     DIALOG CUENTAS FALTANTES (reemplazo moderno del MessageBox del legacy)
+     Se abre cuando POST /Generaciones devuelve 422 con CUENTAS_FALTANTES.
+     ============================================================ -->
+<p-dialog [(visible)]="dialogFaltantesVisible"
+          [modal]="true"
+          [closable]="true"
+          [dismissableMask]="false"
+          [style]="{ width: '90vw', maxWidth: '1100px' }"
+          [contentStyle]="{ maxHeight: '70vh', overflow: 'auto' }">
+  <ng-template pTemplate="header">
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-exclamation-triangle text-orange-500" style="font-size: 1.5rem"></i>
+      <h3 class="m-0">Cuentas pendientes de codigo agrupador SAT</h3>
+    </div>
+  </ng-template>
+
+  <p class="text-color-secondary m-0 mb-3">
+    No es posible generar el XML hasta que las siguientes
+    <strong>{{ cuentasFaltantes().length }}</strong> cuenta(s) tengan su
+    codigo agrupador (U_COD_AG) y naturaleza asignados.
+    Resuelvelas aqui mismo o haz click en <em>Cancelar</em> para arreglarlas en SAP manualmente.
+  </p>
+
+  <p-table [value]="cuentasFaltantes()" styleClass="p-datatable-sm" dataKey="idCuentaSinAgrupador">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 8rem">Cuenta</th>
+        <th>Nombre</th>
+        <th style="width: 14rem">Codigo agrupador SAT</th>
+        <th style="width: 7rem">Naturaleza</th>
+        <th style="width: 11rem">SAP</th>
+        <th style="width: 7rem"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        <td class="font-mono">{{ row.acctCode }}</td>
+        <td>{{ row.acctName }}</td>
+        <td>
+          <p-dropdown [options]="catalogoSat()"
+                      optionLabel="codAgrupador"
+                      optionValue="codAgrupador"
+                      [filter]="true"
+                      filterBy="codAgrupador,nomCuenta"
+                      [ngModel]="getEditFaltante(row.idCuentaSinAgrupador).codAgrupador"
+                      (onChange)="setEditFaltante(row.idCuentaSinAgrupador, { codAgrupador: $event.value })"
+                      placeholder="Buscar..."
+                      appendTo="body"
+                      styleClass="w-full">
+            <ng-template let-cod pTemplate="item">
+              <div class="flex flex-column">
+                <span class="font-mono">{{ cod.codAgrupador }}</span>
+                <small class="text-color-secondary">{{ cod.nomCuenta }}</small>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </td>
+        <td>
+          <p-dropdown [options]="naturalezas()"
+                      optionLabel="clave"
+                      optionValue="idNaturalezaSat"
+                      [ngModel]="getEditFaltante(row.idCuentaSinAgrupador).idNaturaleza"
+                      (onChange)="setEditFaltante(row.idCuentaSinAgrupador, { idNaturaleza: $event.value })"
+                      placeholder="D/A"
+                      appendTo="body"
+                      styleClass="w-full"></p-dropdown>
+        </td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-checkbox inputId="sapD-{{ row.idCuentaSinAgrupador }}"
+                        [binary]="true"
+                        [ngModel]="getEditFaltante(row.idCuentaSinAgrupador).escribirEnSap"
+                        (ngModelChange)="setEditFaltante(row.idCuentaSinAgrupador, { escribirEnSap: $event })"></p-checkbox>
+            <label for="sapD-{{ row.idCuentaSinAgrupador }}" class="text-xs m-0">Escribir</label>
+          </div>
+        </td>
+        <td>
+          <button pButton icon="pi pi-check" label="OK"
+                  class="p-button-sm p-button-success"
+                  [loading]="isResolviendo(row.idCuentaSinAgrupador)"
+                  (click)="resolverFaltante(row)"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center p-4">
+          <i class="pi pi-check-circle text-green-500 mr-2" style="font-size: 1.5rem"></i>
+          Todas las cuentas estan resueltas. Click en <strong>Reintentar generacion</strong> para continuar.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <ng-template pTemplate="footer">
+    <button pButton icon="pi pi-times" label="Cancelar"
+            class="p-button-text"
+            (click)="dialogFaltantesVisible.set(false)"></button>
+    <button pButton icon="pi pi-play" label="Reintentar generacion"
+            [disabled]="cuentasFaltantes().length > 0"
+            (click)="reintentarGeneracion()"
+            pTooltip="Habilitado cuando todas las cuentas pendientes han sido resueltas."
+            tooltipPosition="top"></button>
+  </ng-template>
+</p-dialog>

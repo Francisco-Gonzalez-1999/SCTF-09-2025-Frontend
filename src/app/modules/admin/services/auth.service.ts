@@ -53,37 +53,50 @@ export class AuthService {
     };
   }
 
-  loginWithPopup() {
+  /**
+   * Inicia el flujo MSAL por REDIRECT: navega al login de Microsoft y al volver
+   * la app se recarga con el codigo en la URL. El procesamiento del callback
+   * se hace en handleRedirectCallback() (llamado desde AppComponent al iniciar).
+   *
+   * A diferencia de loginPopup, este metodo NO regresa un Observable de
+   * autenticacion — la pagina se redirige antes de que termine la promise.
+   */
+  loginRedirect() {
     this.isLoading.next(true);
-
-    this.msalService.loginPopup({
+    this.msalService.loginRedirect({
       scopes: ['api://a23f820f-9edc-49ae-acd6-44c32aa407ab/default']
-    }).subscribe({
-      next: (authResponse) => {
-        this.msalService.instance.setActiveAccount(authResponse.account);
-        this.setUserData(authResponse.account);
-        this.router.navigate(['/home']);
-        this.isLoading.next(false);
+    });
+  }
+
+  /**
+   * Se llama UNA vez al inicio de la app (desde AppComponent.ngOnInit) para
+   * procesar el callback de Microsoft despues de loginRedirect. Si la URL
+   * actual NO trae el codigo de auth, el observable emite null y no pasa nada.
+   */
+  handleRedirectCallback() {
+    return this.msalService.handleRedirectObservable().subscribe({
+      next: (result) => {
+        if (result && result.account) {
+          this.msalService.instance.setActiveAccount(result.account);
+          this.setUserData(result.account);
+          this.isLoading.next(false);
+          this.router.navigate(['/']);
+        } else {
+          // No fue un retorno de redirect (carga normal). Solo refresca el
+          // estado por si ya habia una sesion en cache.
+          this.initialize();
+        }
       },
       error: (err) => {
-        console.error('Login error:', err);
+        console.error('[MSAL] Error procesando redirect callback:', err);
         this.isLoading.next(false);
       }
     });
   }
 
   logout() {
-    this.msalService.logoutPopup({
+    this.msalService.logoutRedirect({
       postLogoutRedirectUri: window.location.origin
-    }).subscribe({
-      next: () => {
-        this.userData.next(null);
-        this.router.navigate(['/auth']);
-      },
-      error: (err) => {
-        console.error('Logout error:', err);
-        this.router.navigate(['/auth']);
-      }
     });
   }
 

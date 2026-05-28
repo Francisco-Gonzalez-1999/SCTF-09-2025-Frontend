@@ -1,41 +1,52 @@
-<div class="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">
-  <div class="flex flex-column align-items-center justify-content-center">
-      <!-- <img src="assets/layout/images/{{layoutService.config().colorScheme === 'light' ? 'logo-dark' : 'logo-white'}}.svg" alt="Sakai logo" class="mb-5 w-6rem flex-shrink-0"> -->
-      <img src="assets/layout/images/logo.png" alt="Tododren logo" class="mb-5 w-6rem flex-shrink-0">
-      <div style="border-radius:56px; padding:0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%);">
-          <div class="w-full surface-card py-8 px-5 sm:px-8" style="border-radius:53px">
-              <div class="text-center mb-5">
-                  <!-- <img src="assets/demo/images/login/avatar.png" alt="Image" height="50" class="mb-3"> -->
-                  <div class="text-900 text-3xl font-medium mb-3">Login to Your Account</div>
-                  <span class="text-600 font-medium">Login using Microsoft</span>
-              </div>
-              <div class="flex flex-row justify-content-center">
-                <p-button label="Microsoft" icon="pi pi-microsoft" [rounded]="true" [text]="true" severity="info" [outlined]="true" (onClick)="loginWithMicrosoft()"/>
-              </div>
-
-              <p-divider align="center" type="dotted">
-                <b> or </b>
-              </p-divider>
-
-              <div>
-                  <label for="email1" class="block text-900 text-xl font-medium mb-1">Email</label>
-                  <input id="email1" type="text" placeholder="Email address" pInputText class="w-full md:w-30rem mb-5" style="padding:1rem">
-
-                  <label for="password1" class="block text-900 font-medium text-xl mb-1">Password</label>
-                  <p-password id="password1" [(ngModel)]="password" placeholder="Password" [toggleMask]="true" [feedback]="false" styleClass="mb-5 w-full" class="w-full md:w-30rem" inputStyleClass="w-full p-3 md:w-30rem"></p-password>
-
-                  <div class="flex align-items-center justify-content-between mb-1 gap-5">
-                      <div class="flex align-items-center">
-                          <!-- <p-checkbox id="rememberme1" [binary]="true" styleClass="mr-2"></p-checkbox>
-                          <label for="rememberme1">Remember me</label> -->
-                      </div>
-                      <!-- <a class="font-medium no-underline ml-2 text-right cursor-pointer" style="color: var(--primary-color)">Forgot password?</a> -->
-                  </div>
-                  <!-- <div class="flex align-items-center justify-content-between gap-5"></div> -->
-                  <button pButton pRipple label="Sign In" class="w-full p-3 text-xl" [routerLink]="['/']"></button>
-              </div>
-          </div>
-      </div>
+<div class="login-screen">
+  <!-- Marca + decoración del fondo (queda detrás de la card) -->
+  <div class="login-background" aria-hidden="true">
+    <div class="background-glow background-glow--primary"></div>
+    <div class="background-glow background-glow--secondary"></div>
   </div>
-</div>
 
+  <!-- Card central -->
+  <div class="login-card" role="dialog" aria-labelledby="login-titulo">
+    <div class="login-card__brand">
+      <img src="assets/layout/images/logo.png" alt="Tododren" class="login-card__logo">
+      <span class="login-card__brand-text">Tododren</span>
+    </div>
+
+    <h1 id="login-titulo" class="login-card__titulo">Sistema de Control<br>Tesorería y Fiscal</h1>
+    <p class="login-card__subtitulo">Inicia sesión con tu cuenta corporativa para continuar.</p>
+
+    <!-- Botón Microsoft -->
+    <button class="ms-button"
+            type="button"
+            [disabled]="cargando()"
+            (click)="loginWithMicrosoft()"
+            aria-label="Iniciar sesión con Microsoft">
+      <span *ngIf="!cargando()" class="ms-button__content">
+        <!-- Logo oficial de Microsoft (4 cuadritos) -->
+        <svg class="ms-button__icon" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+          <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
+          <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
+          <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+        </svg>
+        <span>Iniciar sesión con Microsoft</span>
+      </span>
+
+      <span *ngIf="cargando()" class="ms-button__content ms-button__content--loading">
+        <p-progressSpinner styleClass="ms-button__spinner" strokeWidth="3" animationDuration=".7s"></p-progressSpinner>
+        <span>Conectando con Microsoft…</span>
+      </span>
+    </button>
+
+    <!-- Aviso pequeño -->
+    <p class="login-card__legal">
+      <i class="pi pi-shield mr-2"></i>
+      Solo personal autorizado. El acceso se valida contra Microsoft Entra ID (Azure AD).
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <footer class="login-footer">
+    © {{ anioActual }} Tododren · SCTF 09-2025
+  </footer>
+</div>

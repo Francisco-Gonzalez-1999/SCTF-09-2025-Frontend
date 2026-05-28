@@ -1,0 +1,144 @@
+<div class="cone-configuracion p-3">
+  <div class="flex flex-wrap align-items-center justify-content-between mb-3 gap-3">
+    <div>
+      <h2 class="m-0">Configuracion del modulo</h2>
+      <p class="text-color-secondary m-0 mt-1">
+        Parametros por empresa que reemplazan los <code>My.Settings</code> del VCON legacy.
+      </p>
+    </div>
+    <p-dropdown
+      [options]="empresas()"
+      [(ngModel)]="empresaSeleccionada"
+      (onChange)="onEmpresaSeleccionada()"
+      [filter]="true"
+      filterBy="razonSocial,rfc"
+      optionLabel="razonSocial"
+      placeholder="Selecciona empresa"
+      [showClear]="true"
+      appendTo="body"
+      styleClass="w-20rem">
+    </p-dropdown>
+  </div>
+
+  <p-card *ngIf="cfg() as c; else vacio" styleClass="cone-form">
+    <h4 class="mt-0">Campos en SAP B1 (UDFs sobre OACT)</h4>
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <label>Campo codigo agrupador</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.campoCodigoAgrupador"
+               (ngModelChange)="patch('campoCodigoAgrupador', $event)">
+      </div>
+      <div class="col-12 md:col-6">
+        <label>Campo naturaleza</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.campoNaturaleza"
+               (ngModelChange)="patch('campoNaturaleza', $event)">
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <h4 class="mt-0">Comportamiento</h4>
+    <div class="grid">
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="jer" [binary]="true"
+                    [ngModel]="c.usarJerarquiaNiveles"
+                    (ngModelChange)="patch('usarJerarquiaNiveles', $event)"></p-checkbox>
+        <label for="jer">Usar jerarquia de niveles (escala a padre cuando falta U_COD_AG)</label>
+      </div>
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="ord" [binary]="true"
+                    [ngModel]="c.incluirCuentasOrden"
+                    (ngModelChange)="patch('incluirCuentasOrden', $event)"></p-checkbox>
+        <label for="ord">Incluir cuentas de orden ({{ '\@VC_CTASORDEN' }})</label>
+      </div>
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="adj" [binary]="true"
+                    [ngModel]="c.incluirAdjuntos"
+                    (ngModelChange)="patch('incluirAdjuntos', $event)"></p-checkbox>
+        <label for="adj">Incluir adjuntos en polizas</label>
+      </div>
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="fnt" [binary]="true"
+                    [ngModel]="c.incluirFacturasNativas"
+                    (ngModelChange)="patch('incluirFacturasNativas', $event)"></p-checkbox>
+        <label for="fnt">Incluir facturas nativas</label>
+      </div>
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="cns" [binary]="true"
+                    [ngModel]="c.usarFolioConsecutivo"
+                    (ngModelChange)="patch('usarFolioConsecutivo', $event)"></p-checkbox>
+        <label for="cns">Usar folio consecutivo (ROW_NUMBER) en lugar de TransId</label>
+      </div>
+      <div class="col-12 md:col-6 flex align-items-center gap-2">
+        <p-checkbox inputId="pdf" [binary]="true"
+                    [ngModel]="c.generarPdf"
+                    (ngModelChange)="patch('generarPdf', $event)"></p-checkbox>
+        <label for="pdf">Generar PDF adicional al XML</label>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <h4 class="mt-0">Valores default para complementos</h4>
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <label>RFC cheque default</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rfcChequeDefault"
+               (ngModelChange)="patch('rfcChequeDefault', $event)">
+      </div>
+      <div class="col-12 md:col-4">
+        <label>RFC transferencia default</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rfcTransferenciaDefault"
+               (ngModelChange)="patch('rfcTransferenciaDefault', $event)">
+      </div>
+      <div class="col-12 md:col-4">
+        <label>RFC otros medios de pago</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rfcOtrosMpDefault"
+               (ngModelChange)="patch('rfcOtrosMpDefault', $event)">
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <h4 class="mt-0">Rutas (UNC) donde estan los CFDIs adjuntos</h4>
+    <div class="grid">
+      <div class="col-12">
+        <label>Ruta CompAsiento XML</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rutaCompAsientoXml"
+               (ngModelChange)="patch('rutaCompAsientoXml', $event)">
+      </div>
+      <div class="col-12">
+        <label>Ruta CompAsientoLinea XML</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rutaCompAsientoLineaXml"
+               (ngModelChange)="patch('rutaCompAsientoLineaXml', $event)">
+      </div>
+      <div class="col-12">
+        <label>Ruta CompDocLineas XML</label>
+        <input pInputText class="w-full"
+               [ngModel]="c.rutaCompDocLineasXml"
+               (ngModelChange)="patch('rutaCompDocLineasXml', $event)">
+      </div>
+    </div>
+
+    <div class="flex justify-content-end mt-4">
+      <button pButton
+              icon="pi pi-save"
+              label="Guardar configuracion"
+              [loading]="guardando()"
+              (click)="guardar()"></button>
+    </div>
+  </p-card>
+
+  <ng-template #vacio>
+    <div class="text-center text-color-secondary p-5">
+      Selecciona una empresa para ver y editar su configuracion.
+    </div>
+  </ng-template>
+</div>

@@ -14,11 +14,9 @@ export class AuthService {
   constructor(
     private msalService: MsalService,
     private router: Router
-  ) {
-    this.initialize();
-  }
+  ) {}
 
-  private initialize() {
+  initialize() {
     const accounts = this.msalService.instance.getAllAccounts();
     if (accounts.length > 0) {
       this.msalService.instance.setActiveAccount(accounts[0]);

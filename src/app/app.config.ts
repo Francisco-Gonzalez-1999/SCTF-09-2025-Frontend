@@ -1,5 +1,5 @@
 // Usos de app.config.ts
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -11,6 +11,10 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 // Usos de MSal Azure
 import { MsalModule, MSAL_INSTANCE, MSAL_GUARD_CONFIG, MSAL_INTERCEPTOR_CONFIG, MsalService } from '@azure/msal-angular';
 import { MSALInstanceFactory, MSALGuardConfigFactory, MSALInterceptorConfigFactory } from './azure/msal-config';
+
+function initializeMsal(msalService: MsalService) {
+  return () => msalService.initialize();
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,6 +35,12 @@ export const appConfig: ApplicationConfig = {
       useFactory: MSALInterceptorConfigFactory
     },
     MsalService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeMsal,
+      deps: [MsalService],
+      multi: true
+    },
     MessageService,
     ConfirmationService
   ]

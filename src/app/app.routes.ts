@@ -18,6 +18,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./modules/contabilidad-electronica/contabilidad-electronica.routing')
             .then(m => m.contabilidadElectronicaRoutes)
+      },
+      {
+        path: 'pagos-sit',
+        loadChildren: () =>
+          import('./modules/pagos-sit/pagos-sit.routing').then(m => m.pagosSitRoutes)
       }
     ]
   },

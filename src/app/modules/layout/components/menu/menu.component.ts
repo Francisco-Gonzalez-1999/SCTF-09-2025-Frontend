@@ -32,6 +32,13 @@ export class MenuComponent implements OnInit {
         ]
       },
       {
+        label: 'Pagos BBVA (SIT)',
+        items: [
+          { label: 'Pago en Ventanilla', icon: 'pi pi-fw pi-money-bill', routerLink: ['/pagos-sit/captura-pdv'] },
+          { label: 'Historial',          icon: 'pi pi-fw pi-history',    routerLink: ['/pagos-sit/historial'] }
+        ]
+      },
+      {
         label: 'Generar XML SAT',
         items: [
           { label: 'Catalogo de cuentas', icon: 'pi pi-fw pi-list',       routerLink: ['/contabilidad-electronica/generar/catalogo'] },

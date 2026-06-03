@@ -1,0 +1,123 @@
+<div class="sit-hist">
+  <div class="sit-hist-head">
+    <div>
+      <h2>Historial de archivos SIT</h2>
+      <p class="sit-sub">Bitacora de lotes generados. Puedes re-descargar el .txt exacto y ver su detalle.</p>
+    </div>
+    <div class="sit-filtros">
+      <div class="campo">
+        <label>Desde (fecha de alta)</label>
+        <p-calendar [(ngModel)]="desde" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true" />
+      </div>
+      <div class="campo">
+        <label>Hasta</label>
+        <p-calendar [(ngModel)]="hasta" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true" />
+      </div>
+      <button pButton type="button" icon="pi pi-search" label="Buscar"
+              class="p-button-sm" (click)="cargar()"></button>
+      <button pButton type="button" icon="pi pi-filter-slash" label="Limpiar"
+              class="p-button-sm p-button-outlined" (click)="limpiarFiltros()"></button>
+    </div>
+  </div>
+
+  <p-table [value]="lotes()" [loading]="cargando()" styleClass="p-datatable-sm p-datatable-gridlines"
+           [paginator]="true" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Fecha generacion</th>
+        <th>Clave archivo</th>
+        <th>Convenio</th>
+        <th>Servicio</th>
+        <th class="num"># Pagos</th>
+        <th class="num">Importe altas</th>
+        <th>Divisa</th>
+        <th>Estado</th>
+        <th class="num">Tamano</th>
+        <th class="col-acc">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-l>
+      <tr>
+        <td>{{ l.fechaCreacion | date:'yyyy-MM-dd HH:mm' }}</td>
+        <td>{{ l.claveArchivo }}</td>
+        <td>{{ l.convenio }}</td>
+        <td>{{ l.tipoServicio }}</td>
+        <td class="num">{{ l.numPagos }}</td>
+        <td class="num">{{ l.importeTotalAltas | number:'1.2-2' }}</td>
+        <td>{{ l.divisaPrincipal }}</td>
+        <td><p-tag [value]="l.estado" [severity]="severityEstado(l.estado)" /></td>
+        <td class="num">{{ l.tamanioBytes }}</td>
+        <td class="col-acc">
+          <button pButton type="button" icon="pi pi-download"
+                  class="p-button-text p-button-sm" pTooltip="Re-descargar .txt"
+                  (click)="descargar(l)"></button>
+          <button pButton type="button" icon="pi pi-eye"
+                  class="p-button-text p-button-sm" pTooltip="Ver detalle"
+                  (click)="verDetalle(l)"></button>
+          <button pButton type="button" icon="pi pi-trash"
+                  class="p-button-text p-button-danger p-button-sm" pTooltip="Dar de baja"
+                  (click)="eliminar(l)"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="10" class="sit-vacio">No hay lotes generados con esos filtros.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- ============ Detalle del lote ============ -->
+<p-dialog [visible]="detalleVisible()" (visibleChange)="detalleVisible.set($event)"
+          [modal]="true" [style]="{ width: '90vw' }"
+          header="Detalle del lote" [dismissableMask]="true">
+  @if (cargandoDetalle()) {
+    <div class="sit-vacio">Cargando detalle...</div>
+  } @else if (detalle()) {
+    @if (detalle(); as d) {
+    <div class="sit-det-head">
+      <div><span>Archivo:</span> {{ d.lote.nombreArchivo }}</div>
+      <div><span>Convenio:</span> {{ d.lote.convenio }}</div>
+      <div><span>Fecha de alta:</span> {{ d.lote.fechaEnvio }}</div>
+      <div><span>Pagos:</span> {{ d.lote.numPagos }} ({{ d.lote.numAltas }} altas / {{ d.lote.numBajas }} bajas)</div>
+      <div><span>Importe altas:</span> {{ d.lote.importeTotalAltas | number:'1.2-2' }} {{ d.lote.divisaPrincipal }}</div>
+      <div><span>Hash SHA256:</span> <code class="sit-hash">{{ d.lote.hashSha256 }}</code></div>
+    </div>
+
+    <p-table [value]="d.pagos" styleClass="p-datatable-sm p-datatable-gridlines" [scrollable]="true"
+             scrollHeight="50vh">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Instr.</th>
+          <th>Tipo doc.</th>
+          <th>Concepto</th>
+          <th>Referencia</th>
+          <th class="num">Importe</th>
+          <th>Divisa</th>
+          <th>Beneficiario 1</th>
+          <th>Confirmacion</th>
+          <th>Correo / Celular</th>
+          <th>Fecha pago</th>
+          <th>Fecha vigencia</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-p>
+        <tr>
+          <td>{{ p.consecutivo }}</td>
+          <td>{{ p.instruccion }}</td>
+          <td>{{ p.claveTipoDocumento }}</td>
+          <td>{{ p.concepto }}</td>
+          <td>{{ p.referenciaSit }}</td>
+          <td class="num">{{ p.importe | number:'1.2-2' }}</td>
+          <td>{{ p.divisa }}</td>
+          <td>{{ p.nombreBeneficiario1 }}</td>
+          <td>{{ p.claveTipoConfirmacion }}</td>
+          <td>{{ p.correoOCelular }}</td>
+          <td>{{ p.fechaPago }}</td>
+          <td>{{ p.fechaVigencia }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    }
+  }
+</p-dialog>

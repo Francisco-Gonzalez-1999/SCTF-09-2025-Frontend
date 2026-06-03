@@ -39,6 +39,14 @@ export class ApiClient {
     });
   }
 
+  /** POST que devuelve un archivo (blob), p. ej. la generacion del .txt SIT. */
+  postDownload(path: string, body: unknown, params?: Record<string, unknown>): Observable<Blob> {
+    return this.http.post(this.buildUrl(path), body, {
+      params: this.buildParams(params),
+      responseType: 'blob'
+    });
+  }
+
   private buildUrl(path: string): string {
     if (/^https?:\/\//i.test(path)) return path;
     const base = environment.apiUrl.endsWith('/') ? environment.apiUrl : `${environment.apiUrl}/`;

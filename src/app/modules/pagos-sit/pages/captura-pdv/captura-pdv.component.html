@@ -1,0 +1,319 @@
+<div class="sit-page">
+  <div class="sit-header">
+    <h2>Pagos en Ventanilla &mdash; Archivo SIT (BBVA)</h2>
+    <p class="sit-sub">Captura los pagos y exporta el archivo .txt con el layout SIT.</p>
+  </div>
+
+  <!-- ============ Datos generales del lote (Header) ============ -->
+  <div class="sit-card">
+    <div class="sit-card-title">Datos generales</div>
+    <div class="sit-lote-grid">
+      <div class="campo">
+        <label for="convenio">Numero de Convenio *</label>
+        <input id="convenio" type="text" pInputText [(ngModel)]="convenio"
+               placeholder="Ej. 002543613" maxlength="9" />
+      </div>
+      <div class="campo">
+        <label for="descripcion">Descripcion / Clave de archivo *</label>
+        <input id="descripcion" type="text" pInputText [(ngModel)]="claveArchivo"
+               placeholder="Ej. PRUEBA" maxlength="30" />
+      </div>
+      <div class="campo">
+        <label for="fechaEnvio">Fecha de Alta *</label>
+        <p-calendar inputId="fechaEnvio" [(ngModel)]="fechaEnvio"
+                    dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true" />
+      </div>
+    </div>
+
+    @if (erroresCabecera().length) {
+      <ul class="sit-errores">
+        @for (e of erroresCabecera(); track e) { <li>{{ e }}</li> }
+      </ul>
+    }
+  </div>
+
+  <!-- ============ Tabla editable de pagos PDV ============ -->
+  <div class="sit-card">
+    <div class="sit-card-title sit-card-title--row">
+      <span>Pagos en Ventanilla</span>
+      <div class="sit-acciones">
+        <button pButton type="button" icon="pi pi-plus" label="Agregar pago"
+                class="p-button-sm" (click)="agregar()"></button>
+        <button pButton type="button" icon="pi pi-download" label="Exportar SIT (.txt)"
+                class="p-button-sm p-button-success" (click)="generar()"
+                [loading]="generando()" [disabled]="!pagos().length"></button>
+      </div>
+    </div>
+
+    <p-table [value]="pagos()" editMode="cell" [scrollable]="true"
+             scrollHeight="420px" styleClass="p-datatable-sm p-datatable-gridlines sit-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="col-acciones">#</th>
+          <th>Instruccion</th>
+          <th>Tipo doc.</th>
+          <th>Concepto</th>
+          <th>Referencia</th>
+          <th>Importe</th>
+          <th>Divisa</th>
+          <th>Nombre beneficiario 1</th>
+          <th>Identificacion 1</th>
+          <th>Num. identificacion 1</th>
+          <th>Nombre beneficiario 2</th>
+          <th>Identificacion 2</th>
+          <th>Num. identificacion 2</th>
+          <th>Confirmacion</th>
+          <th>Correo / Celular</th>
+          <th>Fecha pago</th>
+          <th>Fecha vigencia</th>
+          <th>Fecha documento</th>
+          <th>Manc.</th>
+          <th>Cheq. caja</th>
+          <th>Rafaga</th>
+          <th>Mensaje rafaga</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-ri="rowIndex">
+        <tr [class.sit-fila-error]="erroresDeFila(ri).length">
+          <td class="col-acciones">
+            <div class="sit-fila-acc">
+              <span class="sit-num"
+                    [pTooltip]="erroresDeFila(ri).length ? erroresDeFila(ri).join('\n') : ''"
+                    tooltipPosition="right">{{ ri + 1 }}</span>
+              <button pButton type="button" icon="pi pi-copy"
+                      class="p-button-text p-button-sm" pTooltip="Duplicar"
+                      (click)="duplicar(ri)"></button>
+              <button pButton type="button" icon="pi pi-trash"
+                      class="p-button-text p-button-danger p-button-sm" pTooltip="Eliminar"
+                      (click)="eliminar(ri)"></button>
+            </div>
+          </td>
+
+          <!-- Instruccion -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="instrucciones" [(ngModel)]="row.instruccion"
+                            optionLabel="label" optionValue="value" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ etiqueta(instrucciones, row.instruccion) }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Tipo documento -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="tiposDocumento" [(ngModel)]="row.tipoDocumento"
+                            optionLabel="label" optionValue="value" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.tipoDocumento }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Concepto -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.concepto" maxlength="30" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.concepto }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Referencia -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.referenciaSit" maxlength="20" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.referenciaSit }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Importe -->
+          <td pEditableColumn class="col-importe">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-inputNumber [(ngModel)]="row.importe" mode="decimal"
+                               [minFractionDigits]="2" [maxFractionDigits]="2" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ (row.importe ?? 0) | number:'1.2-2' }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Divisa -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="divisas" [(ngModel)]="row.divisa"
+                            optionLabel="label" optionValue="value" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.divisa }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Nombre beneficiario 1 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.nombreBeneficiario1" maxlength="40" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.nombreBeneficiario1 }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Identificacion 1 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="identificaciones" [(ngModel)]="row.claveIdentificacion1"
+                            optionLabel="label" optionValue="value" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ etiqueta(identificaciones, row.claveIdentificacion1) }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Num identificacion 1 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.numeroIdentificacion1" maxlength="30" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.numeroIdentificacion1 }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Nombre beneficiario 2 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.nombreBeneficiario2" maxlength="40" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.nombreBeneficiario2 }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Identificacion 2 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="identificaciones" [(ngModel)]="row.claveIdentificacion2"
+                            optionLabel="label" optionValue="value" appendTo="body" [showClear]="true" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ etiqueta(identificaciones, row.claveIdentificacion2) }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Num identificacion 2 -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.numeroIdentificacion2" maxlength="30" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.numeroIdentificacion2 }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Tipo confirmacion -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-dropdown [options]="tiposConfirmacion" [(ngModel)]="row.tipoConfirmacion"
+                            optionLabel="label" optionValue="value" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ etiqueta(tiposConfirmacion, row.tipoConfirmacion) }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Correo / Celular -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.correoOCelular" maxlength="50" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.correoOCelular }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Fecha pago -->
+          <td pEditableColumn class="col-fecha">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-calendar [(ngModel)]="row.fechaPago" dateFormat="yy-mm-dd" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.fechaPago | date:'yyyy-MM-dd' }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Fecha vigencia -->
+          <td pEditableColumn class="col-fecha">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-calendar [(ngModel)]="row.fechaVigencia" dateFormat="yy-mm-dd" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.fechaVigencia | date:'yyyy-MM-dd' }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Fecha documento -->
+          <td pEditableColumn class="col-fecha">
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <p-calendar [(ngModel)]="row.fechaDocumento" dateFormat="yy-mm-dd" appendTo="body" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.fechaDocumento | date:'yyyy-MM-dd' }}</ng-template>
+            </p-cellEditor>
+          </td>
+
+          <!-- Indicadores -->
+          <td class="col-check"><p-checkbox [(ngModel)]="row.mancomunado" [binary]="true" /></td>
+          <td class="col-check"><p-checkbox [(ngModel)]="row.chequeDeCaja" [binary]="true" /></td>
+          <td class="col-check"><p-checkbox [(ngModel)]="row.rafagaPersonalizada" [binary]="true" /></td>
+
+          <!-- Mensaje rafaga -->
+          <td pEditableColumn>
+            <p-cellEditor>
+              <ng-template pTemplate="input">
+                <input pInputText [(ngModel)]="row.mensajeRafaga" maxlength="350" />
+              </ng-template>
+              <ng-template pTemplate="output">{{ row.mensajeRafaga }}</ng-template>
+            </p-cellEditor>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="22" class="sit-vacio">Sin pagos. Usa "Agregar pago" para comenzar.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- ============ Resumen de documentos ============ -->
+  @if (resumen().length) {
+    <div class="sit-card">
+      <div class="sit-card-title">Resumen de documentos</div>
+      <p-table [value]="resumen()" styleClass="p-datatable-sm p-datatable-gridlines">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Divisa</th>
+            <th>Num. de altas</th>
+            <th>Importe de altas</th>
+            <th>Num. de bajas</th>
+            <th>Importe de bajas</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.divisa }}</td>
+            <td>{{ r.altas }}</td>
+            <td>{{ r.importeAltas | number:'1.2-2' }}</td>
+            <td>{{ r.bajas }}</td>
+            <td>{{ r.importeBajas | number:'1.2-2' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</div>

@@ -11,6 +11,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { SitService, filaADto } from '../../services/sit.service';
+import { exportarPlantilla, importarPlantilla } from '../../utils/sit-plantilla';
 import {
   OPCIONES_DIVISA,
   OPCIONES_IDENTIFICACION,
@@ -82,6 +83,34 @@ export class CapturaPdvComponent {
 
   agregar() {
     this.pagos.update(list => [...list, nuevaFilaPdv()]);
+  }
+
+  /** Descarga la plantilla Excel (con los datos actuales si los hay, o un ejemplo). */
+  descargarPlantilla() {
+    const conDatos = this.pagos().filter(p =>
+      p.concepto || p.referenciaSit || p.nombreBeneficiario1 || (p.importe ?? 0) > 0);
+    exportarPlantilla(conDatos);
+  }
+
+  /** Lee el .xlsx seleccionado y reemplaza el contenido de la tabla con sus filas. */
+  async importarExcel(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const filas = await importarPlantilla(file);
+      if (!filas.length) {
+        this.toast.warn('El archivo no contiene pagos para importar.');
+        return;
+      }
+      this.pagos.set(filas);
+      this.errores.set(new Map());
+      this.toast.success(`Se importaron ${filas.length} pago(s). Revisalos y luego exporta el SIT.`);
+    } catch {
+      this.toast.error('No se pudo leer el archivo. Verifica que sea la plantilla .xlsx correcta.');
+    } finally {
+      input.value = ''; // permite volver a seleccionar el mismo archivo
+    }
   }
 
   duplicar(i: number) {

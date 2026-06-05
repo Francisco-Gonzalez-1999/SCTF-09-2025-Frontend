@@ -39,6 +39,17 @@
       <div class="sit-acciones">
         <button pButton type="button" icon="pi pi-plus" label="Agregar pago"
                 class="p-button-sm" (click)="agregar()"></button>
+
+        <button pButton type="button" icon="pi pi-file-excel" label="Descargar plantilla"
+                class="p-button-sm p-button-outlined" pTooltip="Descarga un Excel para prellenar pagos"
+                (click)="descargarPlantilla()"></button>
+
+        <button pButton type="button" icon="pi pi-upload" label="Importar Excel"
+                class="p-button-sm p-button-outlined" pTooltip="Carga la plantilla .xlsx en la tabla"
+                (click)="fileExcel.click()"></button>
+        <input #fileExcel type="file" accept=".xlsx,.xls" hidden
+               (change)="importarExcel($event)" />
+
         <button pButton type="button" icon="pi pi-download" label="Exportar SIT (.txt)"
                 class="p-button-sm p-button-success" (click)="generar()"
                 [loading]="generando()" [disabled]="!pagos().length"></button>

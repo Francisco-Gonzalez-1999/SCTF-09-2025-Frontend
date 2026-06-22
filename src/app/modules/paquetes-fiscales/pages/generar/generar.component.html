@@ -1,0 +1,178 @@
+<div class="pfi-generar p-3">
+  <div class="mb-4">
+    <h2 class="m-0">Generar paquete fiscal</h2>
+    <p class="text-color-secondary m-0 mt-1">
+      Sigue los pasos: elige la empresa, importa la plantilla, marca los documentos y genera el .zip.
+    </p>
+  </div>
+
+  <!-- ===== Paso 1: Empresa ===== -->
+  <section class="paso" [class.paso--ok]="empresaSeleccionada()">
+    <h3 class="paso-titulo"><span class="paso-num">1</span> Empresa</h3>
+    <div class="paso-cuerpo">
+      <p-dropdown [options]="empresas()"
+                  [(ngModel)]="empresaSeleccionada"
+                  [filter]="true" filterBy="razonSocial,rfc"
+                  optionLabel="razonSocial" placeholder="Selecciona la empresa"
+                  appendTo="body" styleClass="w-20rem"></p-dropdown>
+    </div>
+  </section>
+
+  <!-- ===== Paso 2: Plantilla ===== -->
+  <section class="paso" [class.paso--ok]="tieneFilas()">
+    <h3 class="paso-titulo"><span class="paso-num">2</span> Cargar plantilla (Excel)</h3>
+    <div class="paso-cuerpo flex flex-wrap align-items-center gap-2">
+      <button pButton icon="pi pi-file-excel" label="Descargar plantilla"
+              class="p-button-sm p-button-outlined"
+              (click)="descargarPlantilla()"
+              pTooltip="Plantilla con columnas: Transid, Indice, UUID, Fecha." tooltipPosition="bottom"></button>
+
+      <label class="p-button p-button-sm m-0" style="cursor: pointer">
+        <i class="pi pi-upload mr-2"></i> Importar Excel
+        <input type="file" accept=".xlsx" hidden (change)="importarExcel($event)" />
+      </label>
+
+      <div *ngIf="tieneFilas()" class="flex align-items-center gap-3 ml-2">
+        <span class="badge-info"><i class="pi pi-calendar mr-1"></i> Periodo: <strong>{{ periodoTexto }}</strong></span>
+        <span class="badge-info"><i class="pi pi-list mr-1"></i> {{ filas().length }} renglon(es)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Paso 3: Documentos ===== -->
+  <section class="paso" [class.paso--ok]="hayAlgunDocumento">
+    <h3 class="paso-titulo"><span class="paso-num">3</span> Documentos a incluir</h3>
+    <div class="paso-cuerpo">
+      <div class="flex align-items-center gap-2 mb-2 pb-2 border-bottom-1 surface-border">
+        <p-checkbox [ngModel]="todosMarcados" [binary]="true"
+                    (onChange)="setTodos($event.checked)" inputId="cTodos"></p-checkbox>
+        <label for="cTodos" class="font-semibold">Seleccionar / deseleccionar todos</label>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerXml" [binary]="true" inputId="cXml"></p-checkbox>
+          <label for="cXml">Obtener XML</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerPdf" [binary]="true" inputId="cPdf"></p-checkbox>
+          <label for="cPdf">Obtener PDF</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerPoliza" [binary]="true" inputId="cPol"></p-checkbox>
+          <label for="cPol">Obtener Poliza</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerOrdenCompra" [binary]="true" inputId="cOC"></p-checkbox>
+          <label for="cOC">Obtener Orden Compra</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerOrdenVenta" [binary]="true" inputId="cOV"></p-checkbox>
+          <label for="cOV">Obtener Orden Venta</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerPagoEfectuado" [binary]="true" inputId="cPE"></p-checkbox>
+          <label for="cPE">Obtener Pago Efectuado</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="opciones.obtenerPagoRecibido" [binary]="true" inputId="cPR"></p-checkbox>
+          <label for="cPR">Obtener Pago Recibido</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Paso 4: Carpetas ===== -->
+  <section class="paso">
+    <h3 class="paso-titulo"><span class="paso-num">4</span> Carpetas de los CFDI <span class="text-color-secondary font-normal text-sm">(opcional)</span></h3>
+    <div class="paso-cuerpo">
+      <label class="text-color-secondary block mb-1">Una ruta por linea (una por tipo: Ingreso, Egreso, ...):</label>
+      <textarea [(ngModel)]="rutasTexto" rows="3" class="w-full p-inputtext p-inputtext-sm font-mono"
+                placeholder="\\192.168.2.239\SPI-04-2025_XMLs\Procesados\2026\enero\Ingreso&#10;\\192.168.2.239\SPI-04-2025_XMLs\Procesados\2026\enero\Egreso"></textarea>
+      <p class="text-color-secondary text-sm mt-1 mb-0">
+        Cada carpeta contiene los CFDI nombrados <strong>{{ '{UUID}' }}&#64;....xml</strong> (y .pdf).
+        Si lo dejas vacio, se usa la ruta base configurada en el servidor.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== Paso 5: Revisar y generar ===== -->
+  <section class="paso">
+    <h3 class="paso-titulo"><span class="paso-num">5</span> Revisar y generar</h3>
+    <div class="paso-cuerpo">
+      <p-table [value]="filas()"
+               [(selection)]="seleccionados"
+               [paginator]="filas().length > 20"
+               [rows]="20"
+               dataKey="transid"
+               styleClass="p-datatable-sm"
+               [globalFilterFields]="['transid','uuid','indice']">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+            <th pSortableColumn="transid" style="width: 10rem">Transid <p-sortIcon field="transid"></p-sortIcon></th>
+            <th style="width: 14rem">Indice bancario</th>
+            <th pSortableColumn="uuid">UUID <p-sortIcon field="uuid"></p-sortIcon></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-f>
+          <tr>
+            <td><p-tableCheckbox [value]="f"></p-tableCheckbox></td>
+            <td class="font-mono">{{ f.transid }}</td>
+            <td>
+              <input pInputText type="text" [(ngModel)]="f.indice"
+                     placeholder="(opcional)" class="w-full p-inputtext-sm" />
+            </td>
+            <td class="font-mono text-sm">{{ f.uuid || '—' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center text-color-secondary p-4">
+              Importa la plantilla (paso 2) para ver los renglones aqui.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <div class="flex align-items-center gap-3 mt-3">
+        <button pButton icon="pi pi-box" label="Generar paquete"
+                class="p-button-success"
+                [loading]="generando()"
+                [disabled]="!puedeGenerar"
+                (click)="generar()"></button>
+
+        <span *ngIf="!puedeGenerar && !generando()" class="text-color-secondary">
+          <i class="pi pi-info-circle mr-1"></i>{{ motivoFalta }}
+        </span>
+
+        <span class="flex-1"></span>
+
+        <button *ngIf="tieneFilas()" pButton icon="pi pi-times" label="Limpiar"
+                class="p-button-text" (click)="limpiar()"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Resultado ===== -->
+  <div *ngIf="ultimoResultado() as r" class="resultado mt-3 p-3 border-round surface-card">
+    <div class="flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h3 class="m-0"><i class="pi pi-check-circle text-green-500 mr-2"></i>Paquete generado</h3>
+        <p class="text-color-secondary m-0 mt-1">
+          {{ r.totalFacturas }} renglon(es) · {{ r.nombreArchivo }}
+        </p>
+      </div>
+      <button pButton icon="pi pi-download" label="Descargar ZIP"
+              class="p-button-sm" (click)="descargar(r)"></button>
+    </div>
+
+    <div *ngIf="r.advertencias.length" class="mt-3">
+      <h4 class="mt-0 mb-2"><i class="pi pi-exclamation-triangle text-yellow-500 mr-2"></i>Advertencias ({{ r.advertencias.length }})</h4>
+      <ul class="m-0 pl-3 text-sm">
+        <li *ngFor="let a of r.advertencias" class="mb-1">
+          <span class="font-mono">Transid {{ a.transid }}</span> — {{ a.detalle }}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

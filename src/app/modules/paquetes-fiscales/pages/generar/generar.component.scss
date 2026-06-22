@@ -1,0 +1,61 @@
+.pfi-generar {
+  .font-mono {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  // ---- Pasos numerados ----
+  .paso {
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background: var(--surface-card);
+    transition: border-color .15s ease;
+
+    &--ok {
+      border-color: var(--primary-color);
+    }
+  }
+
+  .paso-titulo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: 0 0 .85rem 0;
+    font-size: 1.05rem;
+  }
+
+  .paso-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--primary-color-text);
+    font-size: .9rem;
+    font-weight: 700;
+    flex: 0 0 auto;
+  }
+
+  .paso--ok .paso-num::after {
+    content: '';
+  }
+
+  .paso-cuerpo {
+    padding-left: 2.3rem; // alinea bajo el titulo (despues del numero)
+  }
+
+  .badge-info {
+    background: var(--surface-100);
+    border-radius: 6px;
+    padding: .25rem .6rem;
+    font-size: .9rem;
+    white-space: nowrap;
+  }
+
+  .resultado {
+    border: 1px solid var(--surface-border);
+  }
+}

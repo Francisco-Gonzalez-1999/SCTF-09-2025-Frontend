@@ -1,0 +1,76 @@
+<div class="pfi-historial p-3">
+  <div class="flex flex-wrap align-items-center justify-content-between mb-3 gap-3">
+    <div>
+      <h2 class="m-0">Historial de paquetes</h2>
+      <p class="text-color-secondary m-0 mt-1">Paquetes fiscales (.zip) generados por empresa y periodo.</p>
+    </div>
+    <div class="flex flex-wrap align-items-center gap-2">
+      <p-dropdown [options]="empresas()"
+                  [(ngModel)]="empresaSeleccionada"
+                  (onChange)="cargar()"
+                  [filter]="true" filterBy="razonSocial,rfc"
+                  optionLabel="razonSocial" placeholder="Empresa"
+                  appendTo="body" styleClass="w-15rem"></p-dropdown>
+      <p-dropdown [options]="anios" [(ngModel)]="filtroAnio"
+                  (onChange)="cargar()" appendTo="body" styleClass="w-7rem"></p-dropdown>
+      <p-dropdown [options]="meses" [(ngModel)]="filtroMes"
+                  (onChange)="cargar()" optionLabel="label" optionValue="value"
+                  appendTo="body" styleClass="w-7rem"></p-dropdown>
+      <button pButton icon="pi pi-refresh" class="p-button-text" (click)="cargar()"></button>
+    </div>
+  </div>
+
+  <p-table [value]="paquetes()"
+           [loading]="cargando()"
+           [paginator]="true"
+           [rows]="20"
+           styleClass="p-datatable-sm"
+           dataKey="idPaquete"
+           [globalFilterFields]="['nombreArchivo']">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nombreArchivo">Archivo <p-sortIcon field="nombreArchivo"></p-sortIcon></th>
+        <th pSortableColumn="anio" style="width: 7rem">Anio <p-sortIcon field="anio"></p-sortIcon></th>
+        <th pSortableColumn="mes" style="width: 6rem">Mes <p-sortIcon field="mes"></p-sortIcon></th>
+        <th style="width: 8rem" class="text-center">Facturas</th>
+        <th style="width: 8rem" class="text-center">Polizas</th>
+        <th style="width: 7rem" class="text-center">XML</th>
+        <th style="width: 7rem" class="text-center">Avisos</th>
+        <th pSortableColumn="fechaCreacion" style="width: 11rem">Creado <p-sortIcon field="fechaCreacion"></p-sortIcon></th>
+        <th style="width: 7rem">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr>
+        <td class="font-mono text-sm">{{ p.nombreArchivo }}</td>
+        <td>{{ p.anio }}</td>
+        <td>{{ p.mes }}</td>
+        <td class="text-center">{{ p.totalFacturas }}</td>
+        <td class="text-center">{{ p.polizasGeneradas }}</td>
+        <td class="text-center">{{ p.xmlIncluidos }}</td>
+        <td class="text-center">
+          <p-tag *ngIf="p.advertencias.length" [value]="p.advertencias.length"
+                 severity="warning"
+                 [pTooltip]="p.advertencias.length + ' factura(s) con avisos'"
+                 tooltipPosition="left"></p-tag>
+          <span *ngIf="!p.advertencias.length" class="text-color-secondary">—</span>
+        </td>
+        <td>{{ p.fechaCreacion | date:'short' }}</td>
+        <td>
+          <button pButton icon="pi pi-download"
+                  class="p-button-sm p-button-text"
+                  (click)="descargar(p)"
+                  pTooltip="Descarga el .zip del paquete." tooltipPosition="left"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center text-color-secondary p-4">
+          <ng-container *ngIf="!empresaSeleccionada()">Selecciona una empresa para ver el historial.</ng-container>
+          <ng-container *ngIf="empresaSeleccionada() && !cargando()">Sin paquetes en este periodo.</ng-container>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

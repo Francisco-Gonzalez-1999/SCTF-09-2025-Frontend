@@ -39,6 +39,13 @@ export class MenuComponent implements OnInit {
         ]
       },
       {
+        label: 'Paquetes Fiscales',
+        items: [
+          { label: 'Generar paquete', icon: 'pi pi-fw pi-box',     routerLink: ['/paquetes-fiscales/generar'] },
+          { label: 'Historial',       icon: 'pi pi-fw pi-history', routerLink: ['/paquetes-fiscales/historial'] }
+        ]
+      },
+      {
         label: 'Generar XML SAT',
         items: [
           { label: 'Catalogo de cuentas', icon: 'pi pi-fw pi-list',       routerLink: ['/contabilidad-electronica/generar/catalogo'] },

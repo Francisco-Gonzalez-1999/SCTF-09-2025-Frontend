@@ -23,6 +23,12 @@ export const routes: Routes = [
         path: 'pagos-sit',
         loadChildren: () =>
           import('./modules/pagos-sit/pagos-sit.routing').then(m => m.pagosSitRoutes)
+      },
+      {
+        path: 'paquetes-fiscales',
+        loadChildren: () =>
+          import('./modules/paquetes-fiscales/paquetes-fiscales.routing')
+            .then(m => m.paquetesFiscalesRoutes)
       }
     ]
   },
